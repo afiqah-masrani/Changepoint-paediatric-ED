@@ -1,0 +1,534 @@
+---
+title: "changepoint analysis"
+author: "Afiqah"
+date: "2023-02-06"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Workflow
+
+## 1. Prepare R
+### 1.1 Set working directory
+### 1.2 Load packages
+### 1.3 Load data
+
+## 2. Analysis
+### 2.1 Explore data
+### 2.2 Prepare dataframe for variables
+### 2.3 Changepoint analysis
+#### 2.3.1 Overall trend
+#### 2.3.2 Triage category
+#### 2.3.3 Discharge outcome
+#### 2.3.4 ED discharge diagnosis
+
+# Analysis
+
+## 1. Prepare R
+### 1.1 Set working directory
+```{r}
+getwd()
+```
+
+### 1.2 Load packages
+```{r}
+library(dplyr)
+library(ggplot2)
+library(gtsummary)
+library(EnvCpt)
+library(changepoint)
+library(changepoint.influence)
+library(ggpubr)
+```
+
+### 1.3 Load data
+```{r}
+data <- read.csv('EDbyWeek.csv')
+```
+
+## 2. Analysis
+### 2.1 Explore data
+```{r}
+summary(data)
+```
+
+```{r}
+ggplot(data, aes(x=EpidWeek, y=total)) + geom_line()
+```
+### 2.2 Prepare dataframe for variables
+```{r}
+all <- c(data$total)
+green <- c(data$green)
+yellow <- c(data$yellow)
+red <- c(data$red)
+discharge <- c(data$discharge)
+admission <- c(data$admission)
+death <- c(data$death)
+allergic <- c(data$allergic)
+assault <- c(data$assault)
+trauma <- c(data$traumaburn)
+cns <- c(data$cns)
+derm <- c(data$derm)
+ent <- c(data$ent)
+cd <- c(data$cd)
+gi <- c(data$gi)
+msp <- c(data$msp)
+neo <- c(data$neo)
+nephro <- c(data$nephro)
+ong <- c(data$ong)
+omfs <- c(data$omfs)
+ophthal <- c(data$ophthal)
+others <- c(data$others)
+poison <- c(data$poison)
+psy <- c(data$psy)
+respi <- c(data$respi)
+```
+
+### 2.3 Changepoint analysis
+
+#### 2.3.1 Overall trend
+```{r}
+
+### Primary model
+
+cpt.all <- envcpt(all)
+
+BIC(cpt.all) # returns the BIC for each model.
+which.min(BIC(cpt.all)) 
+plot(cpt.all,type='fit') # plots the fits
+plot(cpt.all,type="bic") # plots the bic values
+
+### Selection of model based on best BIC
+
+cpt.all$meanar2cpt
+
+cpts(cpt.all$meanar2cpt)
+
+
+### Plot model
+
+plot(cpt.all[[which.min(BIC(cpt.all))+1]])
+abline(v=cpts(cpt.all$meanar2cpt), col='blue')
+
+### Test for model fitness
+cpt.all.fit = envcpt(all,models=c("meanar2cpt"))$meanar2cpt
+resid.all = all - rep(param.est(cpt.all.fit)$beta[,1],times=seg.len(cpt.all.fit)) -
+  rep(param.est(cpt.all.fit)$beta[,2],times=seg.len(cpt.all.fit))*1:length(all)
+corrected.all = resid.all + param.est(cpt.all.fit)$beta[3,1] + param.est(cpt.all.fit)$beta[3,2]*1:length(all)
+
+shapiro.test(corrected.all)
+
+ks.test(resid.all, pnorm, mean = mean(corrected.all), sd = sd(corrected.all))
+
+qqnorm(corrected.all)
+qqline(corrected.all)
+```
+#### 2.3.2 Triage category
+
+##### 2.3.2.1 Triage category: Green
+```{r}
+
+### Primary model
+
+cpt.green <- envcpt(green)
+
+BIC(cpt.green) # returns the BIC for each model.
+which.min(BIC(cpt.green)) 
+plot(cpt.green,type='fit') # plots the fits
+plot(cpt.green,type="bic") # plots the bic values
+
+### Selection of model based on best BIC
+
+cpt.green$meanar2cpt
+
+cpts(cpt.green$meanar2cpt)
+
+
+### Plot model
+
+plot(cpt.green[[which.min(BIC(cpt.green))+1]])
+abline(v=cpts(cpt.green$meanar2cpt), col='blue')
+
+### Test for model fitness
+cpt.green.fit = envcpt(all,models=c("meanar2cpt"))$meanar2cpt
+resid.green = green - rep(param.est(cpt.green.fit)$beta[,1],times=seg.len(cpt.green.fit)) -
+  rep(param.est(cpt.green.fit)$beta[,2],times=seg.len(cpt.green.fit))*1:length(green)
+corrected.green = resid.green + param.est(cpt.green.fit)$beta[3,1] + param.est(cpt.green.fit)$beta[3,2]*1:length(green)
+
+shapiro.test(corrected.green)
+
+ks.test(resid.green, pnorm, mean = mean(corrected.green), sd = sd(corrected.green))
+
+qqnorm(corrected.green)
+qqline(corrected.green)
+```
+
+##### 2.3.2.2 Triage category: Yellow
+```{r}
+
+### Primary model
+
+cpt.yellow <- envcpt(yellow)
+
+BIC(cpt.yellow) # returns the BIC for each model.
+which.min(BIC(cpt.yellow)) 
+plot(cpt.yellow,type='fit') # plots the fits
+plot(cpt.yellow,type="bic") # plots the bic values
+
+### Selection of model based on best BIC
+
+cpt.yellow$meanar1cpt
+
+cpts(cpt.yellow$meanar1cpt)
+
+
+### Plot model
+
+plot(cpt.yellow[[which.min(BIC(cpt.yellow))+1]])
+abline(v=cpts(cpt.yellow$meanar1cpt), col='blue')
+
+### Test for model fitness
+cpt.yellow.fit = envcpt(yellow,models=c("meanar1cpt"))$meanar1cpt
+resid.yellow = yellow - rep(param.est(cpt.yellow.fit)$beta[,1],times=seg.len(cpt.yellow.fit)) -
+  rep(param.est(cpt.yellow.fit)$beta[,2],times=seg.len(cpt.yellow.fit))*1:length(yellow)
+corrected.yellow = resid.yellow + param.est(cpt.yellow.fit)$beta[3,1] + param.est(cpt.yellow.fit)$beta[3,2]*1:length(yellow)
+
+shapiro.test(corrected.yellow)
+
+ks.test(resid.yellow, pnorm, mean = mean(corrected.yellow), sd = sd(corrected.yellow))
+
+qqnorm(corrected.yellow)
+qqline(corrected.yellow)
+```
+
+#### 2.3.2.3 Triage category: Red
+```{r}
+
+### Primary model
+
+cpt.red <- envcpt(red)
+
+BIC(cpt.red) 
+which.min(BIC(cpt.red)) 
+plot(cpt.red,type='fit') 
+plot(cpt.red,type="bic")
+
+### Selection of model based on best BIC
+
+cpt.red$meanar1cpt
+
+cpts(cpt.red$meanar1cpt)
+
+
+### Plot model
+
+plot(cpt.red[[which.min(BIC(cpt.red))+1]]) + abline(v=cpts(cpt.red$meanar1cpt), col='blue')
+
+### Test for model fitness
+cpt.red.fit = envcpt(red,models=c("meanar1cpt"))$meanar1cpt
+resid.red = red - rep(param.est(cpt.red.fit)$beta[,1],times=seg.len(cpt.red.fit)) -
+  rep(param.est(cpt.red.fit)$beta[,2],times=seg.len(cpt.red.fit))*1:length(red)
+corrected.red = resid.red + param.est(cpt.red.fit)$beta[3,2] + param.est(cpt.red.fit)$beta[3,1]*1:length(red)
+
+shapiro.test(corrected.red)
+
+ks.test(resid.red, pnorm, mean = mean(corrected.red), sd = sd(corrected.red))
+
+qqnorm(corrected.red)
+qqline(corrected.red)
+```
+#### 2.3.3 Visit outcome
+
+##### 2.3.3.1 Visit outcome: Discharge
+```{r}
+
+### Primary model
+
+cpt.discharge <- envcpt(discharge)
+
+BIC(cpt.discharge) 
+which.min(BIC(cpt.discharge)) 
+plot(cpt.discharge,type='fit') 
+plot(cpt.discharge,type="bic")
+
+### Selection of model based on best BIC
+
+cpt.discharge$meanar2cpt
+
+cpts(cpt.discharge$meanar2cpt)
+
+
+### Plot model
+
+plot.discharge <- plot(cpt.discharge[[which.min(BIC(cpt.discharge))+1]]) + abline(v=cpts(cpt.discharge$meanar2cpt), col='blue')
+
+### Test for model fitness
+cpt.discharge.fit = envcpt(discharge,models=c("meanar2cpt"))$meanar2cpt
+resid.discharge = discharge - rep(param.est(cpt.discharge.fit)$beta[,1],times=seg.len(cpt.discharge.fit)) -  rep(param.est(cpt.discharge.fit)$beta[,2],times=seg.len(cpt.discharge.fit))*1:length(discharge)
+corrected.discharge = resid.discharge + param.est(cpt.discharge.fit)$beta[3,2] + param.est(cpt.discharge.fit)$beta[3,1]*1:length(discharge)
+
+shapiro.test(corrected.discharge)
+
+ks.test(resid.discharge, pnorm, mean = mean(corrected.discharge), sd = sd(corrected.discharge))
+
+qqnorm(corrected.discharge)
+qqline(corrected.discharge)
+```
+
+##### 2.3.3.2 Visit outcome: Admission
+```{r}
+
+### Primary model
+
+cpt.admission <- envcpt(admission)
+
+BIC(cpt.admission) 
+which.min(BIC(cpt.admission)) 
+plot(cpt.admission,type='fit') 
+plot(cpt.admission,type="bic")
+
+### Selection of model based on best BIC
+
+cpt.admission$meanar2cpt
+
+cpts(cpt.admission$meanar2cpt)
+
+
+### Plot model
+
+plot(cpt.admission[[which.min(BIC(cpt.admission))+1]]) + abline(v=cpts(cpt.admission$meanar2cpt), col='blue')
+
+### Test for model fitness
+cpt.admission.fit = envcpt(admission,models=c("meanar2cpt"))$meanar2cpt
+
+resid.admission = admission - (rep(param.est(cpt.admission.fit)$beta[,1],times=seg.len(cpt.admission.fit))) -  (rep(param.est(cpt.admission.fit)$beta[,2],times=seg.len(cpt.admission.fit))*1:length(admission))
+
+corrected.admission = resid.admission + param.est(cpt.admission.fit)$beta[2,2] + param.est(cpt.admission.fit)$beta[2,1]*1:length(admission)
+
+shapiro.test(corrected.admission)
+
+ks.test(resid.admission, pnorm, mean = mean(corrected.admission), sd = sd(corrected.admission))
+
+qqnorm(corrected.admission)
+qqline(corrected.admission)
+```
+
+##### 2.3.3.3 Visit outcome: Death
+```{r}
+
+### Primary model
+
+cpt.death <- envcpt(death)
+
+BIC(cpt.death) 
+which.min(BIC(cpt.death)) 
+plot(cpt.death,type='fit') 
+
+### Selection of model based on best BIC
+
+cpt.death$trendar1cpt
+
+cpts(cpt.death$trendar1cpt)
+
+
+### Plot model
+
+plot(cpt.death$trendar1cpt)
+
+### Test for model fitness
+cpt.death.fit = envcpt(death,models=c("trendar1cpt"))$trendar1cpt
+
+resid.death = death - (rep(param.est(cpt.death.fit)$beta[,1],times=seg.len(cpt.death.fit))) -  (rep(param.est(cpt.death.fit)$beta[,2],times=seg.len(cpt.death.fit))*1:length(death))
+
+corrected.death = resid.death + param.est(cpt.death.fit)$beta[2,2] + param.est(cpt.death.fit)$beta[2,1]*1:length(death)
+
+shapiro.test(corrected.admission)
+
+ks.test(resid.admission, pnorm, mean = mean(corrected.admission), sd = sd(corrected.admission))
+
+qqnorm(corrected.admission)
+qqline(corrected.admission)
+```
+
+#### 2.3.4 ED discharge diagnosis
+
+##### 2.3.4.1 Bump chart top 10 ED discharge diagnosis
+
+```{r}
+my_theme <- function() {
+
+  # Colors
+  color.background = "white"
+  color.text = "#22211d"
+
+  # Begin construction of chart
+  theme_bw(base_size=15) +
+
+    # Format background colors
+    theme(panel.background = element_rect(fill=color.background, color=color.background)) +
+    theme(plot.background  = element_rect(fill=color.background, color=color.background)) +
+    theme(panel.border     = element_rect(color=color.background)) +
+    theme(strip.background = element_rect(fill=color.background, color=color.background)) +
+
+    # Format the grid
+    theme(panel.grid.major.y = element_blank()) +
+    theme(panel.grid.minor.y = element_blank()) +
+    theme(axis.ticks       = element_blank()) +
+
+    # Format the legend
+    theme(legend.position = "none") +
+
+    # Format title and axis labels
+    theme(plot.title       = element_text(color=color.text, size=20, face = "bold")) +
+    theme(axis.title.x     = element_text(size=14, color="black", face = "bold")) +
+    theme(axis.title.y     = element_text(size=14, color="black", face = "bold", vjust=1.25)) +
+    theme(axis.text.x      = element_text(size=10, vjust=0.5, hjust=0.5, color = color.text)) +
+    theme(axis.text.y      = element_text(size=10, color = color.text)) +
+    theme(strip.text       = element_text(face = "bold")) +
+
+    # Plot margins
+    theme(plot.margin = unit(c(0.35, 0.2, 0.3, 0.35), "cm"))
+}
+```
+
+
+```{r}
+rank <- read.csv('dxrank.csv')
+
+rank$Period2 <- as.factor(rank$Period2)
+
+df.rank <- rank %>% 
+  group_by(Period) %>% 
+  arrange(Period2, Rank, Diagnosis) %>% 
+  mutate(ranking = row_number()) %>% 
+  as.data.frame()
+
+head(df.rank)
+
+library(ggbump)
+
+show.top.n <- 10
+
+ggplot(data = df.rank, aes(x = Period2, y = ranking, group = Diagnosis)) +
+  geom_line(aes(color = Diagnosis, alpha = 1), size = 2) +
+  geom_point(aes(color = Diagnosis, alpha = 1), size = 3) +
+  geom_point(color = "#FFFFFF", size = 1) +
+  scale_y_reverse(breaks = 1:18) +
+  coord_cartesian(ylim = c(1,18)) + 
+  theme(legend.position = "none") +
+  my_theme() 
+
+```
+
+##### 2.3.4.2 Diagnosis: Respi
+```{r}
+### Primary model
+
+cpt.respi <- envcpt(respi)
+
+BIC(cpt.respi) 
+which.min(BIC(cpt.respi)) 
+plot(cpt.respi,type="bic")
+
+### Selection of model based on best BIC
+
+cpt.respi$meanar2cpt
+
+cpts(cpt.respi$meanar2cpt)
+```
+
+```{r}
+plot(cpt.respi[[which.min(BIC(cpt.respi))+1]]) + abline(v=cpts(cpt.respi$meanar2cpt), col='blue')
+```
+
+##### 2.3.4.3 Diagnosis: CNS
+```{r}
+### Primary model
+
+cpt.cns <- envcpt(cns)
+
+BIC(cpt.cns) 
+which.min(BIC(cpt.cns)) 
+plot(cpt.cns,type="bic")
+
+### Selection of model based on best BIC
+
+plot(cpt.cns[[which.min(BIC(cpt.cns))+1]]) + abline(v=cpts(cpt.cns$meancpt), col='blue')
+
+```
+
+##### 2.3.4.4 Diagnosis: Fever and CD
+```{r}
+### Primary model
+
+cpt.cd <- envcpt(cd)
+
+BIC(cpt.cd) 
+which.min(BIC(cpt.cd)) 
+plot(cpt.cd,type="bic")
+
+### Selection of model based on best BIC
+
+cpt.cd$trendar2cpt
+
+cpts(cpt.cd$trendar2cpt)
+
+plot(cpt.cd[[which.min(BIC(cpt.cd))+1]]) + abline(v=cpts(cpt.cd$trendar2cpt), col='blue')
+```
+
+##### 2.3.4.5 Diagnosis: Burn or trauma
+```{r}
+### Primary model
+
+cpt.trauma <- envcpt(trauma)
+
+BIC(cpt.trauma) 
+which.min(BIC(cpt.trauma)) 
+plot(cpt.trauma,type="bic")
+
+### Selection of model based on best BIC
+
+cpt.trauma$trendar2
+
+plot(cpt.trauma$trendar2cpt)
+```
+
+##### 2.3.4.6 Diagnosis: GI
+```{r}
+### Primary model
+
+cpt.gi <- envcpt(gi)
+
+BIC(cpt.gi) 
+which.min(BIC(cpt.gi)) 
+plot(cpt.gi,type="bic")
+
+### Selection of model based on best BIC
+
+cpt.gi$meanar2cpt
+
+plot(cpt.gi[[which.min(BIC(cpt.gi))+1]]) + abline(v=cpts(cpt.gi$meanar2cpt), col='blue')
+
+```
+
+##### 2.3.4.7 Diagnosis: Neonatal
+```{r}
+### Primary model
+
+cpt.neo <- envcpt(neo)
+
+BIC(cpt.neo) 
+which.min(BIC(cpt.neo)) 
+plot(cpt.neo,type="bic")
+
+### Selection of model based on best BIC
+
+cpt.neo$trendar2cpt
+
+plot(cpt.neo[[which.min(BIC(cpt.neo))+1]]) + abline(v=cpts(cpt.neo$trendar2cpt), col='blue')
+```
